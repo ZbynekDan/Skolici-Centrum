@@ -3,7 +3,7 @@
 // oprávnění volajícího se kontroluje zde:
 //   admin    – může vše
 //   skolitel – jen instruktory, kteří patří pod něj
-import { createClient } from "npm:@supabase/supabase-js@2.45.4";
+import { createClient } from "npm:@supabase/supabase-js@2.117.3";
 
 const LOGIN_DOMAIN = "skoleni.local"; // musí odpovídat config.js (LOGIN_DOMAIN)
 
@@ -12,6 +12,16 @@ const cors = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
+// Nové klíče Supabase (sb_secret_…) přicházejí v SUPABASE_SECRET_KEYS jako JSON {název: klíč};
+// starší projekty mají SUPABASE_SERVICE_ROLE_KEY.
+function secretKey(): string | undefined {
+  const raw = Deno.env.get("SUPABASE_SECRET_KEYS");
+  if (raw) {
+    try { const keys = JSON.parse(raw); return keys.default ?? Object.values(keys)[0] as string; } catch { /* fall through */ }
+  }
+  return Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? undefined;
+}
+
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json" } });
 
@@ -20,15 +30,15 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ error: "Použijte POST." }, 405);
 
   const url = Deno.env.get("SUPABASE_URL")!;
-  const anon = Deno.env.get("SUPABASE_ANON_KEY")!;
-  const service = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  const authHeader = req.headers.get("Authorization") ?? "";
+  const service = secretKey();
+  if (!service) return json({ error: "Funkci chybí serverový klíč (SUPABASE_SECRET_KEYS)." }, 500);
+  const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
 
-  const asUser = createClient(url, anon, { global: { headers: { Authorization: authHeader } } });
-  const { data: { user } } = await asUser.auth.getUser();
+  const admin = createClient(url, service, { auth: { persistSession: false, autoRefreshToken: false } });
+  // ověření přihlášeného uživatele podle jeho přihlašovacího tokenu
+  if (!token) return json({ error: "Nejste přihlášen." }, 401);
+  const { data: { user } } = await admin.auth.getUser(token);
   if (!user) return json({ error: "Nejste přihlášen." }, 401);
-
-  const admin = createClient(url, service, { auth: { persistSession: false } });
   const { data: me } = await admin.from("profiles").select("*").eq("id", user.id).single();
   if (!me || !me.active || !["admin", "skolitel"].includes(me.role)) return json({ error: "Nemáte oprávnění spravovat uživatele." }, 403);
 
