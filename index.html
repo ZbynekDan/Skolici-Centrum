@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#d6001c">
+<meta name="robots" content="noindex,nofollow">
+<title>Školicí centrum CZDC</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23d6001c'/%3E%3Cpath d='M5 13 16 8l11 5-11 5-11-5Z M10 15.5v5c3 2.5 9 2.5 12 0v-5' fill='none' stroke='white' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700;6..12,800&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="bar"></div>
+<main id="app" class="wrap"><div class="empty">Načítám aplikaci…</div></main>
+<div id="toast" class="toast" hidden role="status"></div>
+<div id="cam" class="cam" hidden role="dialog" aria-modal="true" aria-label="Skenování kamerou">
+  <div class="cam-in">
+    <div class="cam-view"><video id="camVideo" playsinline muted autoplay></video><div class="cam-frame"></div></div>
+    <p id="camMsg" aria-live="polite"></p>
+    <button class="btn big" type="button" data-act="camClose">Zavřít · Закрити</button>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
